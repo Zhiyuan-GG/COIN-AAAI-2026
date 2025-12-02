@@ -54,6 +54,7 @@ parser.add_argument('--uncertainty', type=str, default='seb', help='[lnpe, pe, s
 parser.add_argument('--samples', type=int, default=10, help='num generations for UQ')
 parser.add_argument('--split-ratio', type=float, default=0.5, help='for calib and test num')
 parser.add_argument('--multi-check', type=int, default=100, help='for multiple split and check')
+parser.add_argument('--alpha', type=list, default=[0.1, 0.2, 0.3, 0.4, 0.5], help='risk level')
 parser.add_argument('--delta', type=float, default=0.05, help='significance level')
 parser.add_argument('--upper-bound', type=str, default='CP', help='CP (Clopper–Pearson) OR HFD (Hoeffding) OR EBB')
 # ----------------------------------------------------------------------------------------------------------------------
@@ -250,7 +251,7 @@ qa_num = len(generations)
 num_calib = int(qa_num * args.split_ratio)
 num_test = qa_num - num_calib
 # risk level list
-alpha_list = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+alpha_list = args.alpha
 mean_list = []
 std_list = []
 for alpha in alpha_list:

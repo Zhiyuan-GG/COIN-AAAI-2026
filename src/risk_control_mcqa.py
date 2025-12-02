@@ -51,7 +51,7 @@ parser.add_argument('--apply', type=int, default=6000, help='applied number')
 parser.add_argument('--uncertainty', type=str, default='white', help='white or black')
 parser.add_argument('--split-ratio', type=float, default=0.5, help='for calib and test num')
 parser.add_argument('--multi-check', type=int, default=100, help='for multiple split and check')
-# parser.add_argument('--alpha', type=float, default=0.1, help='risk level')
+parser.add_argument('--alpha', type=list, default=[0.1, 0.2, 0.3, 0.4, 0.5], help='risk level')
 parser.add_argument('--delta', type=float, default=0.05, help='significance level')
 parser.add_argument('--upper-bound', type=str, default='CP', help='CP (Clopper–Pearson) OR HFD (Hoeffding)')
 # ----------------------------------------------------------------------------------------------------------------------
@@ -139,7 +139,7 @@ for gen in tqdm.tqdm(generations):
 qa_num = len(generations)
 num_calib = int(qa_num * args.split_ratio)
 num_test = qa_num - num_calib
-alpha_list = [0.05, 0.1, 0.125, 0.15, 0.175, 0.2, 0.225, 0.25, 0.275, 0.3, 0.35, 0.4, 0.45, 0.5]
+alpha_list = args.alpha
 mean_list = []
 std_list = []
 for alpha in alpha_list:

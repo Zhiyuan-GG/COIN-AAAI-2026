@@ -52,6 +52,7 @@ parser.add_argument('--uncertainty', type=str, default='white', help='white or b
 parser.add_argument('--split-ratio', type=float, default=0.5, help='for calib and test num')
 parser.add_argument('--multi-check', type=int, default=100, help='for multiple split and check')
 parser.add_argument('--delta', type=float, default=0.05, help='significance level')
+parser.add_argument('--alpha', type=list, default=[0.1, 0.2, 0.3, 0.4, 0.5], help='risk level')
 # ----------------------------------------------------------------------------------------------------------------------
 args = parser.parse_args()
 # model_name for path of saved parsed dataset
@@ -172,7 +173,7 @@ qa_num = len(generations)
 num_calib = int(qa_num * args.split_ratio)
 num_test = qa_num - num_calib
 # risk level list
-alpha_list = [0.1, 0.12, 0.14, 0.16, 0.18, 0.20, 0.22, 0.24, 0.26, 0.28, 0.30]
+alpha_list = args.alpha
 cp_mean_list = []
 cp_std_list = []
 hfd_mean_list = []

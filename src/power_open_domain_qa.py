@@ -55,6 +55,7 @@ parser.add_argument('--samples', type=int, default=10, help='num generations for
 parser.add_argument('--split-ratio', type=float, default=0.5, help='for calib and test num')
 parser.add_argument('--multi-check', type=int, default=100, help='for multiple split and check')
 parser.add_argument('--delta', type=float, default=0.05, help='significance level')
+parser.add_argument('--alpha', type=list, default=[0.1, 0.2, 0.3, 0.4, 0.5], help='risk level')
 parser.add_argument('--upper-bound', type=str, default='CP', help='CP (Clopper–Pearson) OR HFD (Hoeffding)')
 # ----------------------------------------------------------------------------------------------------------------------
 args = parser.parse_args()
@@ -185,7 +186,39 @@ def ecc_uncertainty(similarity_list, k=None):
     V_centered = V - v_mean
     U_Ecc = np.linalg.norm(V_centered)
     return U_Ecc
+def compute_bh_selected_error_rate(p_value_list, correctness_list, alpha):
+    m = len(p_value_list)
+    p_value_array = np.array(p_value_list)
+    correctness_array = np.array(correctness_list, dtype=bool)
 
+    # Benjamini-Hochberg procedure
+    sorted_indices = np.argsort(p_value_array)  # p-value从小到大排序之后的 indices
+    sorted_p_values = p_value_array[sorted_indices]
+    bh_thresholds = alpha * (np.arange(1, m + 1) / m)
+    selected_flags = sorted_p_values <= bh_thresholds
+
+    if selected_flags.any():
+        k_star = np.max(np.where(selected_flags)[0])
+        selected_indices = sorted_indices[:k_star + 1]
+    else:
+        selected_indices = np.array([], dtype=int)
+
+    # FDR calculation (empirical error rate)
+    if len(selected_indices) > 0:
+        num_incorrect_in_selected = (~correctness_array[selected_indices]).sum()
+        fdr = num_incorrect_in_selected / len(selected_indices)
+    else:
+        fdr = None
+
+    # Power calculation
+    num_true_aligned = correctness_array.sum()
+    if num_true_aligned > 0:
+        num_selected_true_aligned = correctness_array[selected_indices].sum()
+        power = num_selected_true_aligned / num_true_aligned
+    else:
+        power = None
+
+    return fdr, power
 # uncertainty and correctness
 id_to_uncertainty = {}
 id_to_correctness = {}
@@ -250,7 +283,7 @@ qa_num = len(generations)
 num_calib = int(qa_num * args.split_ratio)
 num_test = qa_num - num_calib
 # risk level list
-alpha_list = [0.11, 0.13, 0.15, 0.17, 0.19, 0.21, 0.23, 0.25, 0.27, 0.29]
+alpha_list = args.alpha
 cp_mean_list = []
 cp_std_list = []
 hfd_mean_list = []
