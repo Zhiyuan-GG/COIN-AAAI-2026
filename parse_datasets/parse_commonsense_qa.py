@@ -34,7 +34,7 @@ parser.add_argument('--few-shot-num',
                     default=1,
                     help='for few-shot prompt')
 parser.add_argument('--max-num',
-                    default=6000,
+                    default=10000,
                     help='for maximum applied samples')
 args = parser.parse_args()
 # ----------------------------------------------------------------------------------------------------------------------
@@ -197,7 +197,4 @@ if __name__ == "__main__":
 
     with open(r'../row_data/commonsense_qa/commonsenseqa.json', 'w') as json_file:
         json.dump(for_save_json, json_file, indent=4)
-
-
-
 

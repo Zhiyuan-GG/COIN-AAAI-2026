@@ -10,26 +10,40 @@
 ![Inplementation](Implementation.png)
 
 
-### Data Preparing
+### Parse Data
 ```shell
-python parse_commonsense_qa.py --cache-model LocalPath --generate-model ModelVersion --few-shot-num InstanceNumber --max-num SampleNumber 
-python parse_triviaqa.py --cache-model LocalPath --generate-model ModelVersion --few-shot-num InstanceNumber --max-num SampleNumber 
+python parse_commonsense_qa.py --cache-model LocalPath --generate-model ModelVersion --few-shot-num 1 --max-num 10000 
+python parse_triviaqa.py --cache-model LocalPath --generate-model ModelVersion --few-shot-num 1 --max-num 2000 
 ```
 - LocalPath: Local path for saving downloaded models
 - ModelVersion: Model version, such as DeepSeek-R1-Distill-Qwen-7B
-- InstanceNumber: We add several QA examples into the prompt, InstanceNumber is the number of applied QA pairs, such as 3
-- SampleNumber: Number of parsed QA samples, totally employed for calibration and test, such as 6000
 
-### Generation and Clean
+### Generate and Clean
 ```shell
-python generate.py `--cache-model LocalPath --generate-model ModelVersion --dataset commonsenseqa` --max-length-of-generation 128 --num-beams 5 --num-generations-per-prompt 20 --top-p 0.9 --temperature 1.0
-python generate.py --cache-model LocalPath --generate-model ModelVersion --dataset triviaqa --max-length-of-generation 128 --num-beams 5 --num-generations-per-prompt 10 --top-p 0.9 --temperature 1.0 
-python clean_mcqa.py --cache-model LocalPath --generate-model ModelVersion --dataset commonsenseqa --max-length-of-generation 128 --num-beams 5 --num-generations-per-prompt 20 --top-p 0.9 --temperature 1.0
-python clean_open_domain_qa.py --cache-model LocalPath --generate-model ModelVersion --dataset triviaqa --max-length-of-generation 128 --num-beams 5 --num-generations-per-prompt 10 --top-p 0.9 --temperature 1.0 
+python generate.py --cache-model LocalPath --generate-model ModelVersion --dataset commonsenseqa --num-generations-per-prompt 20
+python generate.py --cache-model LocalPath --generate-model ModelVersion --dataset triviaqa --num-generations-per-prompt 10
+python clean_mcqa.py --cache-model LocalPath --generate-model ModelVersion --dataset commonsenseqa --num-generations-per-prompt 20
+python clean_open_domain_qa.py --cache-model LocalPath --generate-model ModelVersion --dataset triviaqa --num-generations-per-prompt 10 
 ```
 
-### Preparing for Correctness and Uncertainty
+### Prepare for Correctness and Uncertainty
 ```shell
 python get_mcqa_logit.py --cache-model LocalPath --generate-model ModelVersion --dataset commonsenseqa
-python get_open_domain_qa_logits.py --cache-model LocalPath --generate-model ModelVersion --dataset triviaqa --max-length-of-generation 128 --num-beams 5 --num-generations-per-prompt 10 --top-p 0.9 --temperature 1.0 
+python get_open_domain_qa_logits.py --cache-model LocalPath --generate-model ModelVersion --dataset triviaqa --num-generations-per-prompt 10
+python open_domain_qa_clustering.py --cache-model LocalPath --generate-model ModelVersion --dataset triviaqa --num-generations-per-prompt 10 --infer-model NLIModel
+python open_domain_qa_mst_entailment.py --cache-model LocalPath --generate-model ModelVersion --dataset triviaqa --num-generations-per-prompt 10 --infer-model NLIModel
+python open_domain_qa_mst_similarity.py  --cache-model LocalPath --generate-model ModelVersion --dataset triviaqa --num-generations-per-prompt 10 --similarity-model SentenceSimilarityModel
+python open_domain_qa_similarity.py --cache-model LocalPath --generate-model ModelVersion --dataset triviaqa --num-generations-per-prompt 10 --similarity-model SentenceSimilarityModel
+```
+- NLIModel: Natural language inference model, such as deberta-large-mnli (contradiction neutrality entailment)
+- SentenceSimilarityModel: stsb-distilroberta-base or stsb-roberta-large
+
+### Risk Control and Power
+```shell
+python risk_control_mcqa.py --cache-model LocalPath --generate-model ModelVersion --dataset commonsenseqa --num-generations-per-prompt 20 --apply 6000 --uncertainty white --split-ratio 0.5 --multi-check 100 --alpha [0.1, 0.2, 0.3] --delta 0.05 --upper-bound CP
+python risk_control_mcqa.py --cache-model LocalPath --generate-model ModelVersion --dataset commonsenseqa --num-generations-per-prompt 20 --apply 6000 --uncertainty white --split-ratio 0.5 --multi-check 100 --alpha [0.1, 0.2, 0.3] --delta 0.05 --upper-bound HFD
+python risk_control_open_domain_qa.py --cache-model LocalPath --generate-model ModelVersion --dataset triviaqa --num-generations-per-prompt 10 --correctness-method similarity --correctness-threshold 0.7 --uncertainty seb --samples 10 --split-ratio 0.5 --alpha [0.1, 0.2, 0.3] --delta 0.05 --upper-bound CP
+python risk_control_open_domain_qa.py --cache-model LocalPath --generate-model ModelVersion --dataset triviaqa --num-generations-per-prompt 10 --correctness-method similarity --correctness-threshold 0.7 --uncertainty seb --samples 10 --split-ratio 0.5 --alpha [0.1, 0.2, 0.3] --delta 0.05 --upper-bound HFD
+python power_mcqa.py --cache-model LocalPath --generate-model ModelVersion --dataset commonsenseqa --num-generations-per-prompt 20 --apply 6000 --uncertainty white --split-ratio 0.5 --multi-check 100 --alpha [0.1, 0.2, 0.3] --delta 0.05
+python power_open_domain_qa.py --cache-model LocalPath --generate-model ModelVersion --dataset triviaqa --num-generations-per-prompt 10 --correctness-method similarity --correctness-threshold 0.7 --uncertainty seb --samples 10 --split-ratio 0.5 --alpha [0.1, 0.2, 0.3] --delta 0.05
 ```
